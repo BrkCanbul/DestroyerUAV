@@ -7,15 +7,21 @@ using UnityEngine;
 public class FixedWingController:MonoBehaviour {
 
    
-    [Tooltip("Hava yoğunluğu (kg/m^3)"), Range(0,100f)]
+    [Tooltip("Air Density (kg/m^3)"), Range(0,100f)]
     public float AirDensity = 1.225f; // kg/m^3 (deniz seviyesinde)
 
-    [Tooltip("Kanat alanı (m^2)"), Range(0.1f,100f)]
+    [Tooltip("Wing ARea (m^2)"), Range(0.1f,100f)]
     public float WingArea = 0.55f; // m^2 (Cessna 172 için yaklaşık)
 
     [Header("Drag")]
     public float DragCoeff = 0.045f; // Cd0 gibi düşün, küçük bir değer
     public float ReferenceArea = 0.55f; // Kanat alanı ile aynı olabilir
+
+    [Tooltip("Wing Span (m) - for induced drag")]
+    public float WingSpan = 2.12f; // ortalama iha kanat açıklığı
+
+    [Tooltip("Kanat Verimliliği"), Range(0.7f,0.95f)]
+    public float WingEfficiency = 0.85f; // e, genellikle 0.7-0.95 arası
 
     public float GetThrust {
         get => thrustInput;
@@ -57,6 +63,14 @@ public class FixedWingController:MonoBehaviour {
     public bool isCatapultLaunch = false;
     public KeyCode launchKey = KeyCode.Space;
 
+    [Header("Sideslip (Yan Kayma)")]
+    [Tooltip("Dikey stabilizatör alanı (m^2)"), Range(0.05f,2f)]
+    public float VerticalStabilizerArea = 0.15f;
+
+    [Tooltip("Yan kayma kuvvet katsayısı"), Range(0f,2f)]
+    public float SideForceCoefficient = 0.8f;
+
+
     [Header("Kontrol Torkları")]
     [Tooltip("Pitch (X ekseni) için maksimum tork")]
     public float MaxPitchTorque = 5000f;
@@ -66,6 +80,13 @@ public class FixedWingController:MonoBehaviour {
 
     [Tooltip("Yaw (Y ekseni) için maksimum tork")]
     public float MaxYawTorque = 2000f;
+
+    [Tooltip("bu AoA'Dan sonra stall başlar"),Range(12f,20f)]
+    public float StallAngle = 16f;
+
+
+    [Tooltip("Stall sırasında kontrol yüzeyi etkinliği"),Range(0f,1f)]
+    public float StallControlAuthority = 0.3f;  
 
     [Header("Damping (opsiyonel)")]
     public float PitchDamping = 200f;
@@ -85,6 +106,21 @@ public class FixedWingController:MonoBehaviour {
     private float yawInput;
     private float thrustInput;
 
+
+    [Header("Mouse Kontrolü - Hibrit")]
+    public bool useHybridMouse = true;
+
+    [Tooltip("Roll için mouse X hassasiyeti"), Range(0.5f,3f)]
+    public float mouseRollSensitivity = 1.5f;
+
+    [Tooltip("Pitch için mouse Y hassasiyeti"), Range(0.5f,3f)]
+    public float mousePitchSensitivity = 2f;
+
+    [Tooltip("Roll yumuşatma"), Range(0.01f,0.3f)]
+    public float rollSmoothing = 0.1f;
+
+    private float targetRoll;
+    private float rollVelocity;
 
 
 
@@ -109,30 +145,63 @@ public class FixedWingController:MonoBehaviour {
             return;
 
         float q = 0.5f*AirDensity*speed*speed; // dinamik basınç
-        float dragMagnitude = q*DragCoeff*WingArea;
+
+        float Ar = (WingSpan * WingSpan)/WingArea; // Aspect Ratio
+
+        float Cl_current = Cl.Evaluate(AoA);
+        float Cdi = (Cl_current*Cl_current)/(Mathf.PI*WingEfficiency*Ar); // Induced drag coefficient
+
+        float totalDrag = DragCoeff + Cdi;
+        
+        
+        float dragMagnitude = q*totalDrag*ReferenceArea;
 
         // Drag her zaman hızın ters yönünde
         Vector3 dragForce = -v.normalized*dragMagnitude;
 
         rb.AddForce(dragForce);
 
-        Debug.DrawRay(transform.position,dragForce*0.01f,Color.blue);
+        Debug.DrawRay(transform.position,dragForce,Color.blue);
     }
 
     private void ReadInputs() {
-        // Unity Input Manager'daki default eksenler:
-        // "Vertical" = W/S veya ↑/↓  → Pitch
-        // "Horizontal" = A/D veya ←/→ → Roll
-        pitchInput=Input.GetAxis("Vertical");   // çekince (W) pozitif → burun yukarı
-        rollInput=Input.GetAxis("Horizontal"); // sağa roll pozitif
+        if(useHybridMouse) {
+            // Roll: Mouse pozisyonuna göre (ekranın sağı/solu)
+            float mouseXPos = (Input.mousePosition.x/Screen.width-0.5f)*2f;
+            targetRoll=Mathf.SmoothDamp(targetRoll,mouseXPos,ref rollVelocity,rollSmoothing);
+            rollInput=targetRoll*mouseRollSensitivity;
 
-        // Unity'de default "Yaw" ekseni yok → Q/E ile basit bir okuma yapalım
-        yawInput=0f;
-        if(Input.GetKey(KeyCode.Q))
-            yawInput=-1f; // sola rudder
-        if(Input.GetKey(KeyCode.E))
-            yawInput=1f; // sağa rudder
+            // Pitch: Mouse delta (hareket miktarı)
+            float mouseYDelta = Input.GetAxis("Mouse Y");
+            pitchInput=mouseYDelta*mousePitchSensitivity;
 
+            // Yaw için Q/E veya Mouse Wheel
+            yawInput=0f;
+            if(Input.GetKey(yawLeft))
+                yawInput=-1f;
+            if(Input.GetKey(yawRight))
+                yawInput=1f;
+
+            // Alternatif: Mouse wheel ile yaw
+            float mouseWheel = Input.GetAxis("Mouse ScrollWheel");
+            if(Mathf.Abs(mouseWheel)>0.01f) {
+                yawInput=Mathf.Sign(mouseWheel);
+            }
+
+        }
+        else {
+            // Klavye kontrolü (eski kodun)
+            pitchInput=Input.GetAxis(pitchAxis);
+            rollInput=Input.GetAxis(rollAxis);
+
+            yawInput=0f;
+            if(Input.GetKey(yawLeft))
+                yawInput=-1f;
+            if(Input.GetKey(yawRight))
+                yawInput=1f;
+        }
+
+        // Throttle aynı kalıyor
         if(Input.GetKey(throttleUp))
             thrustInput=Mathf.Clamp01(thrustInput+throttleRate*Time.deltaTime);
         if(Input.GetKey(throttleDown))
@@ -163,10 +232,28 @@ public class FixedWingController:MonoBehaviour {
     
     private void ApplyForces() {
         rb.AddForceAtPosition(EnginePosition.forward*(EnginePower*thrustInput),EnginePosition.position);
+
         lift=CalculateLift();
+    
         rb.AddForceAtPosition(LiftPosition.up*lift,LiftPosition.position);
 
+        float sideForce = CalculateSideForce();
+        rb.AddForce(transform.right*sideForce);
+        Debug.DrawRay(transform.position,transform.right*sideForce,Color.yellow);
     }
+
+    private float CalculateSideForce() {
+        float speed = LocalVelocity.magnitude;
+        if(speed<0.1f)
+            return 0f;
+
+        float q = 0.5f*AirDensity*speed*speed;
+        float sideForceCoeff = -Mathf.Sin(AoAYaw*Mathf.Deg2Rad)*SideForceCoefficient;
+
+        return sideForceCoeff*q*VerticalStabilizerArea;
+
+    }
+
     private float CalculateLift() {
         float speed = LocalVelocity.magnitude;
         float q = 0.5f*AirDensity*speed*speed;
@@ -208,10 +295,18 @@ public class FixedWingController:MonoBehaviour {
 
     }
     private void ApplyControlTorques() {
+
+        float speed = LocalVelocity.magnitude;
+        float controlAuthority = Mathf.Clamp01(speed-10f/20f); // 15 m/s hızda tam kontrol
+
+        if(Mathf.Abs(AoA)>StallAngle) {
+            controlAuthority*=StallControlAuthority; // Stall'da kontrol %30'a düşer
+        }
+
         Vector3 controlTorque = new Vector3(
-            pitchInput*MaxPitchTorque,     // X: pitch
-            yawInput*MaxYawTorque,       // Y: yaw
-           -rollInput*MaxRollTorque       // Z: roll (sağa roll = negatif Z ile uyumlu olsun diye - işareti)
+            pitchInput*MaxPitchTorque * controlAuthority  ,     // X: pitch
+            yawInput*MaxYawTorque     * controlAuthority  ,       // Y: yaw
+           -rollInput*MaxRollTorque   * controlAuthority    // Z: roll (sağa roll = negatif Z ile uyumlu olsun diye - işareti)
         );
 
         rb.AddRelativeTorque(controlTorque,ForceMode.Force);
