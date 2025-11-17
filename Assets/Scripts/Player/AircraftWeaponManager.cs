@@ -3,12 +3,12 @@ using UnityEngine;
 public class AircraftWeaponManager : MonoBehaviour
 {
 
+    public ControlMode controlMode = ControlMode.PlayerControl;
     [Header("Bomb Settings")]
     public Transform BombSpawnLocation;
     public GameObject BombPrefab;
     public int BombCount = 5;
     public int dropBombCooldown = 2;
-
 
 
 
@@ -30,18 +30,21 @@ public class AircraftWeaponManager : MonoBehaviour
 
     private bool canShoot = true;
     private bool canDropBomb = true;
-    private float secondBetweenShots;
+    private float SecondBetweenShots {
+        get =>1f/((shootsPerMinute)/60f);
+    }
     private float shootTimer = 0f;
     private float BombDropTimer = 0;
 
     void Start()
     {
-        secondBetweenShots = 1f/((shootsPerMinute)/60f);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if(controlMode != ControlMode.PlayerControl)
+            return;
 
         canShoot=shootTimer<=0f&&AmmoCount>=0;
         canDropBomb= BombDropTimer<=0&&BombCount>0;
@@ -72,8 +75,8 @@ public class AircraftWeaponManager : MonoBehaviour
     private void Shot() {
         if(canShoot) {
             AmmoCount--;
-            ShotSound.Play();
-            shootTimer = secondBetweenShots;
+            ShotSound.PlayOneShot(ShotSound.clip);
+            shootTimer = SecondBetweenShots;
             var instantiatedObject = Instantiate(ammoPrefab, shootPoint.position, shootPoint.rotation);
             var ammoRb = instantiatedObject.GetComponent<Rigidbody>();
             if(ammoRb != null) {

@@ -2,11 +2,14 @@ using System.Collections;
 using UnityEngine;
 
 public class ProjectileBehavior:MonoBehaviour {
-    [Header("Bomb Settings")]
+
+
+
+    [Header("Projectile Settings")]
     public int damage = 100;
     public float explosionRadius = 5f;
     public float explosionForce = 500f;
-
+    public float proximityRadius =  5f;
     [Header("FX")]
     [Tooltip("Patlama efektinin prefab'ýný buraya sürükle.")]
     public ParticleSystem explosionEffect;
@@ -15,22 +18,21 @@ public class ProjectileBehavior:MonoBehaviour {
     public float explosionEffectLifetime = 0f;
 
     private bool hasExploded = false;
+    public LayerMask playerLayer;
 
     private void Start() {
         
         StartCoroutine(DestroyAfterTime(10f));
 
     }
-
     private void OnCollisionEnter(Collision collision) {
-        // Ayný bombanýn birden fazla kez patlamasýný önle
         if(hasExploded)
             return;
         hasExploded=true;
 
         Explode();
     }
-
+ 
     private IEnumerator DestroyAfterTime(float time) {
         yield return new WaitForSeconds(time);
         if(!hasExploded) {
@@ -76,16 +78,16 @@ public class ProjectileBehavior:MonoBehaviour {
     }
 
     private void ExplosionHit(Collider hit) {
-        // Burada hasar verme ve kuvvet uygulama iþlemlerini yapacaksýn
-        if(explosionEffect!=null) {
             if(hit.TryGetComponent<Rigidbody>(out var rigidbody)) {
                 rigidbody.AddExplosionForce(explosionForce,transform.position,explosionRadius);
             }
-            
-        }
-    }
+            var entity = hit.GetComponentInParent<Entity>();
+            if(entity != null) {
+                entity.TakeDamage(damage);
+            }
 
-    // Sahnede radius’u görmek için:
+    }
+    
     private void OnDrawGizmosSelected() {
         Gizmos.color=Color.red;
         Gizmos.DrawWireSphere(transform.position,explosionRadius);

@@ -3,18 +3,20 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - CinemachineTarget
+  - Ammo
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Ground
   - Water
   - UI
   - Camera
-  - 
-  - 
-  - 
+  - PostProceslayer
+  - Enemy
+  - Player
   - 
   - 
   - 

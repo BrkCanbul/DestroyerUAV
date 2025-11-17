@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 8f46b455363e54846b197e049cfa2d53
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - postProcessVolumePrefab: {fileID: 7211388962365741654, guid: ba73728ec352f8742b6e0e2e3c60287b,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 308526
+  packageName: City Building Kit - 100 Low Poly City assets
+  packageVersion: 1.1
+  assetPath: Assets/Fries and Seagull/City 03/Scene Props/Scripts/Setup/FriesManagerBRP.cs
+  uploadId: 737367

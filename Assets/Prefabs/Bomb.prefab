@@ -97,7 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damage: 100
   explosionRadius: 20
-  explosionForce: 10000
+  explosionForce: 0
   explosionEffect: {fileID: 3701045844593119263, guid: e9d08de1dc644c64aa09587ceafa02b2, type: 3}
   explosionEffectLifetime: 0
 --- !u!54 &-8204519679828731179
