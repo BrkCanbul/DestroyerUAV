@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4711359236315777087}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Thrust
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 3023405011757889226}
   - component: {fileID: 6658734761580054889}
   - component: {fileID: 6722334670858145028}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Engine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -362,7 +362,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1054600507822865045}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Gear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -393,7 +393,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6956298706634418159}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Bomb Bay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -425,7 +425,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2409339437525164964}
   - component: {fileID: 570586920656324686}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Muzzle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -555,7 +555,7 @@ GameObject:
   - component: {fileID: 2571878485051022972}
   - component: {fileID: 4970417052019510204}
   - component: {fileID: 6458065105269411534}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -639,7 +639,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 297977671148375566}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Lift
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -675,7 +675,7 @@ GameObject:
   - component: {fileID: 2658777605246534403}
   - component: {fileID: 3045461201644047969}
   - component: {fileID: 6299533009809582941}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Enemy2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -893,14 +893,14 @@ MonoBehaviour:
   launchKey: 32
   VerticalStabilizerArea: 0.15
   SideForceCoefficient: 0.8
-  MaxPitchTorque: 12
-  MaxRollTorque: 5
-  MaxYawTorque: 5
+  MaxPitchTorque: 48
+  MaxRollTorque: 20
+  MaxYawTorque: 20
   StallAngle: 16
   StallControlAuthority: 0.3
-  PitchDamping: 5
-  RollDamping: 4
-  YawDamping: 3
+  PitchDamping: 20
+  RollDamping: 16
+  YawDamping: 12
 --- !u!114 &3045461201644047969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -924,11 +924,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  maxVisionDistance: 1
+  maxVisionDistance: 600
   fieldOfView: 90
   minEnemyAltitudeToSee: 50
   chaseDistance: 50
   playerTransform: {fileID: 0}
+  difficulty: 0
+  leadPursuitTime: 1.5
+  gunRange: 200
+  optimalRange: 150
+  minSafeSpeed: 30
+  maxSafeAoA: 12
+  lagPursuitOffset: 80
+  reactionDelay: 0.2
   rollPid:
     Kp: 1.5
     Ki: 0.01
@@ -953,11 +961,11 @@ MonoBehaviour:
     outputMax: 1
     integralMin: -0.5
     integralMax: 0.5
-  maxBankAngle: 90
-  maxPitchAngle: 20
+  maxBankAngle: 45
+  maxPitchAngle: 45
   targetReachThreshold: 10
   desiredAltitude: 100
-  yawFromRollFactor: 0.5
+  yawFromRollFactor: 0.1
   minSlipSpeed: 5
 --- !u!114 &6299533009809582941
 MonoBehaviour:
@@ -978,6 +986,9 @@ MonoBehaviour:
   minCrashSpeedForExplosion: 5
   explosionEffect: {fileID: 3701045844593119263, guid: e9d08de1dc644c64aa09587ceafa02b2, type: 3}
   dieEffect: {fileID: 3701045844593119263, guid: c1d11272e7745a8439b2ba55885614a6, type: 3}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!1001 &6720512354635834781
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1049,6 +1060,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 1f43b41d1a5c6104ea03c8ab467dbcbd, type: 3}
       propertyPath: m_Name
       value: Tabomonp55
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1f43b41d1a5c6104ea03c8ab467dbcbd, type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

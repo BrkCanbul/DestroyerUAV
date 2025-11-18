@@ -32,6 +32,8 @@ public class FixedWingController:MonoBehaviour {
     public float GetThrust {
         get => thrustInput;
     }
+    public float GetAoA => AoA;
+    
 
     [Tooltip("Lift katsayısı eğrisi (Cl)"), SerializeField]
     public AnimationCurve Cl = new AnimationCurve(
@@ -153,7 +155,6 @@ public class FixedWingController:MonoBehaviour {
 
         rb.AddForce(dragForce);
 
-        Debug.DrawRay(transform.position,dragForce,Color.blue);
     }
 
 
@@ -195,25 +196,24 @@ public class FixedWingController:MonoBehaviour {
     }
 
     private void LaunchIfLanded() {
-        if(rb.linearVelocity.magnitude>5.5f) {
+        if(rb.linearVelocity.magnitude>5.5f || !isCatapultLaunch) {
             return;
         }
-        if(isCatapultLaunch&&Input.GetKeyDown(launchKey)) {
-            
-            rb.AddForce(transform.forward*EnginePower*5f,ForceMode.Impulse);
-        }
+        rb.AddForce(transform.forward*EnginePower*5f,ForceMode.Impulse);
+        
     }
-    void FixedUpdate() {
+
+    private void Update() {
         if(controlMode==ControlMode.PlayerControl) {
             ReadInputs();
         }
+    }
+    void FixedUpdate() {
 
         CalculateState();
         ApplyForces();
         ApplyControlTorques();
         ApplyDrag();
-        Debug.DrawRay(LiftPosition.position,LiftPosition.up*lift*0.1f,Color.green);
-        Debug.DrawRay(EnginePosition.position,-EnginePosition.forward*EnginePower*0.1f,Color.red);
     }
     
     private void ApplyForces() {
@@ -228,7 +228,6 @@ public class FixedWingController:MonoBehaviour {
             sideForce=0f; // yere yakınken yan kuvvet uygulama
         }
         rb.AddForce(transform.right*sideForce);
-        Debug.DrawRay(transform.position,transform.right*sideForce,Color.yellow);
     }
 
     private float CalculateSideForce() {
@@ -248,10 +247,6 @@ public class FixedWingController:MonoBehaviour {
         float q = 0.5f*AirDensity*speed*speed;
         return Cl.Evaluate(AoA)*q*WingArea;
     }
-
-    //private void CalculateAoA() {
-    //    AoA=Mathf.Atan2(-LocalVelocity.y,LocalVelocity.z)*Mathf.Rad2Deg;
-    //    AoAYaw=Mathf.Atan2(LocalVelocity.x,LocalVelocity.z)*Mathf.Rad2Deg;
 
     //}
     private void CalculateAoA() {
@@ -295,7 +290,7 @@ public class FixedWingController:MonoBehaviour {
         Vector3 controlTorque = new Vector3(
             pitchInput*MaxPitchTorque * controlAuthority  ,     // X: pitch
             yawInput*MaxYawTorque     * controlAuthority  ,       // Y: yaw
-           -rollInput*MaxRollTorque   * controlAuthority    // Z: roll (sağa roll = negatif Z ile uyumlu olsun diye - işareti)
+            -rollInput*MaxRollTorque   * controlAuthority    // Z: roll (sağa roll = negatif Z ile uyumlu olsun diye - işareti)
         );
 
         rb.AddRelativeTorque(controlTorque,ForceMode.Force);

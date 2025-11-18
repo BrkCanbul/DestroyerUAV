@@ -1,3 +1,4 @@
+using UnityEditor.Animations;
 using UnityEngine;
 
 public class EnemyPlane : Entity
@@ -9,9 +10,10 @@ public class EnemyPlane : Entity
     [Header("Death Settings")]
     public float deathTorque = 500f;
     public float deathforce = 100f;
-    public float minCrashSpeedForExplosion = 5f;
+    public float minCrashSpeedForExplosion = 25f;
     public ParticleSystem explosionEffect;
     public ParticleSystem dieEffect;
+    public LayerMask groundLayer;
     private bool isDead = false;
 
     //references
@@ -53,13 +55,32 @@ public class EnemyPlane : Entity
         base.TakeDamage(damage);
     }
 
+    private bool IsInLayer(GameObject obj, LayerMask layerMask) {
+        return (layerMask.value & (1 << obj.layer)) > 0;
+    }
     private void OnCollisionEnter(Collision collision) {
-        if(collision.gameObject.tag=="Ammo")
+        if(collision.gameObject.tag=="Ammo") {
+
             return;
-        if(!isDead)
+        }
+        if(!isDead) {
+            Debug.Log($"{gameObject.name} collided with {collision.gameObject.name}");
+            Die();
+        }
+
+        if(!IsInLayer(collision.gameObject,groundLayer)) {
+
+            Debug.Log("Not ground layer, no explosion");
+
             return;
+            
+        }
+        Debug.Log(collision.gameObject.layer);
+        Debug.Log(groundLayer);
+        Debug.Log("Ground layer collision, checking for explosion");
         if(rb!=null&&rb.linearVelocity.magnitude<minCrashSpeedForExplosion)
             return;
+
         if(explosionEffect!=null) {
             var fx = Instantiate(explosionEffect,transform.position,Quaternion.identity);
             fx.Play();
